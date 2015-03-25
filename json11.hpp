@@ -76,7 +76,6 @@ public:
     Json() noexcept;                // NUL
     Json(std::nullptr_t) noexcept;  // NUL
     Json(double value);             // NUMBER
-    Json(int value);                // NUMBER
     Json(intmax_t value);           // NUMBER
     Json(bool value);               // BOOL
     Json(const std::string &value); // STRING
@@ -86,6 +85,10 @@ public:
     Json(array &&values);           // ARRAY
     Json(const object &values);     // OBJECT
     Json(object &&values);          // OBJECT
+
+    // Integer constructor
+    template<typename T, class = typename std::enable_if<std::is_integral<T>::value>::type>
+    Json(T value) : Json(intmax_t(value)){}
 
     // Implicit constructor: anything with a to_json() function.
     template <class T, class = decltype(&T::to_json)>
