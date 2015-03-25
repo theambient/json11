@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <limits>
+#include <stdint.h>
+#include <inttypes.h>
 
 namespace json11 {
 
@@ -50,10 +52,14 @@ static void dump(double value, string &out) {
     out += buf;
 }
 
-static void dump(int value, string &out) {
+static void dump(intmax_t value, string &out) {
     char buf[32];
-    snprintf(buf, sizeof buf, "%d", value);
+    snprintf(buf, sizeof buf, "%" PRIdMAX, value);
     out += buf;
+}
+
+static void dump(int value, string &out) {
+    dump((intmax_t)value, out);
 }
 
 static void dump(bool value, string &out) {
@@ -158,20 +164,20 @@ protected:
 
 class JsonDouble final : public Value<Json::NUMBER, double> {
     double number_value() const override { return m_value; }
-    int int_value() const override { return static_cast<int>(m_value); }
+    intmax_t int_value() const override { return static_cast<intmax_t>(m_value); }
     bool equals(const JsonValue * other) const override { return m_value == other->number_value(); }
     bool less(const JsonValue * other)   const override { return m_value <  other->number_value(); }
 public:
     explicit JsonDouble(double value) : Value(value) {}
 };
 
-class JsonInt final : public Value<Json::NUMBER, int> {
+class JsonInt final : public Value<Json::NUMBER, intmax_t> {
     double number_value() const override { return m_value; }
-    int int_value() const override { return m_value; }
+    intmax_t int_value() const override { return m_value; }
     bool equals(const JsonValue * other) const override { return m_value == other->number_value(); }
     bool less(const JsonValue * other)   const override { return m_value <  other->number_value(); }
 public:
-    explicit JsonInt(int value) : Value(value) {}
+    explicit JsonInt(intmax_t value) : Value(value) {}
 };
 
 class JsonBoolean final : public Value<Json::BOOL, bool> {
@@ -240,6 +246,7 @@ Json::Json() noexcept                  : m_ptr(statics().null) {}
 Json::Json(std::nullptr_t) noexcept    : m_ptr(statics().null) {}
 Json::Json(double value)               : m_ptr(make_shared<JsonDouble>(value)) {}
 Json::Json(int value)                  : m_ptr(make_shared<JsonInt>(value)) {}
+Json::Json(intmax_t value)             : m_ptr(make_shared<JsonInt>(value)) {}
 Json::Json(bool value)                 : m_ptr(value ? statics().t : statics().f) {}
 Json::Json(const string &value)        : m_ptr(make_shared<JsonString>(value)) {}
 Json::Json(string &&value)             : m_ptr(make_shared<JsonString>(move(value))) {}
@@ -255,7 +262,7 @@ Json::Json(Json::object &&values)      : m_ptr(make_shared<JsonObject>(move(valu
 
 Json::Type Json::type()                           const { return m_ptr->type();         }
 double Json::number_value()                       const { return m_ptr->number_value(); }
-int Json::int_value()                             const { return m_ptr->int_value();    }
+intmax_t Json::int_value()                             const { return m_ptr->int_value();    }
 bool Json::bool_value()                           const { return m_ptr->bool_value();   }
 const string & Json::string_value()               const { return m_ptr->string_value(); }
 const vector<Json> & Json::array_items()          const { return m_ptr->array_items();  }
@@ -264,7 +271,7 @@ const Json & Json::operator[] (size_t i)          const { return (*m_ptr)[i];   
 const Json & Json::operator[] (const string &key) const { return (*m_ptr)[key];         }
 
 double                    JsonValue::number_value()              const { return 0; }
-int                       JsonValue::int_value()                 const { return 0; }
+intmax_t                  JsonValue::int_value()                 const { return 0; }
 bool                      JsonValue::bool_value()                const { return false; }
 const string &            JsonValue::string_value()              const { return statics().empty_string; }
 const vector<Json> &      JsonValue::array_items()               const { return statics().empty_vector; }
